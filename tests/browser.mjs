@@ -1,0 +1,70 @@
+import { chromium, expect } from '@playwright/test';
+import assert from 'node:assert/strict';
+import { mkdir } from 'node:fs/promises';
+await mkdir('test-results',{recursive:true});
+const browser=await chromium.launch({channel:'chrome',headless:true});
+const context=await browser.newContext({viewport:{width:1440,height:1100},locale:'pt-BR'});
+const page=await context.newPage();
+const errors=[];
+page.on('pageerror',error=>errors.push(error.message));
+try {
+  await page.goto('http://127.0.0.1:4173/');
+  await page.getByRole('button',{name:/Explorar prévia local/}).click();
+  await page.getByRole('heading',{name:'Olá, vocês.'}).waitFor();
+  await page.screenshot({path:'test-results/desktop.png',fullPage:true});
+  await page.getByRole('button',{name:'Novo compromisso',exact:true}).click();
+  await page.getByLabel('Título',{exact:true}).fill('Teste temporário');
+  await page.getByLabel('Categoria',{exact:false}).last().fill('Categoria teste');
+  await page.locator('select[name=repeat]').selectOption('weekly');
+  await page.getByLabel('Termina às').fill('08:00');
+  await page.getByRole('button',{name:'Salvar compromisso'}).click();
+  await page.getByRole('alert').filter({hasText:'horário final'}).waitFor();
+  await page.getByLabel('Termina às').fill('10:00');
+  await page.getByRole('button',{name:'Salvar compromisso'}).click();
+  await page.locator('#editor[open]').waitFor({state:'hidden'});
+  await page.locator('.selected-panel .event-card').filter({hasText:'Teste temporário'}).waitFor();
+  await page.getByLabel('Filtrar por responsável').selectOption('Daiane');
+  assert.equal(await page.locator('.selected-panel .event-card').count(),0);
+  await page.getByRole('button',{name:'Limpar',exact:true}).click();
+  await page.locator('.selected-panel .event-card').first().click();
+  await page.getByRole('button',{name:'Duplicar',exact:true}).click();
+  await page.getByRole('button',{name:'Salvar compromisso'}).click();
+  await expect(page.locator('.selected-panel .event-card')).toHaveCount(2);
+  await page.getByRole('button',{name:'Semana',exact:true}).click();
+  await page.getByRole('button',{name:'Próximo período'}).click();
+  assert.ok(await page.locator('.calendar-event').count()>=2);
+  await page.getByRole('button',{name:'Dia',exact:true}).click();
+  await page.getByRole('button',{name:'Hoje',exact:true}).click();
+  await expect(page.locator('.day-view .event-card')).toHaveCount(2);
+  await page.getByRole('button',{name:'Mês',exact:true}).click();
+  await page.evaluate(async()=>{await navigator.serviceWorker.ready});
+  // Primeiro reload torna o documento controlado pelo service worker.
+  await page.reload(); await page.getByRole('button',{name:/Explorar prévia local/}).click();
+  await page.waitForFunction(()=>!!navigator.serviceWorker.controller);
+  await context.setOffline(true);
+  await page.reload(); await page.getByRole('button',{name:/Explorar prévia local/}).click();
+  await page.locator('.selected-panel .event-card').first().waitFor();
+  await expect(page.locator('.selected-panel .event-card')).toHaveCount(2);
+  await page.locator('.selected-panel .event-card').first().click();
+  await page.getByLabel('Título',{exact:true}).fill('Editado sem internet');
+  await page.getByRole('button',{name:'Salvar compromisso'}).click();
+  await page.locator('.selected-panel .event-card').filter({hasText:'Editado sem internet'}).waitFor();
+  await context.setOffline(false);
+  await page.setViewportSize({width:390,height:844});
+  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>window.innerWidth),false);
+  await page.screenshot({path:'test-results/mobile-with-events.png',fullPage:true});
+  page.on('dialog',dialog=>dialog.accept());
+  for(let i=0;i<2;i++){
+    await page.locator('.selected-panel .event-card').first().click();
+    await page.getByRole('button',{name:'Excluir série'}).click();
+    await page.locator('#editor[open]').waitFor({state:'hidden'});
+  }
+  assert.equal(await page.locator('.selected-panel .event-card').count(),0);
+  await page.screenshot({path:'test-results/mobile.png',fullPage:true});
+  await page.getByRole('button',{name:'Preferências',exact:true}).last().click();
+  await page.getByRole('heading',{name:'Do seu jeito'}).waitFor();
+  await page.getByRole('button',{name:'Fechar',exact:true}).click();
+  assert.deepEqual(errors,[]);
+  console.log('PASS: CRUD, duplicação, validação, filtros, recorrência semanal, navegação, offline/reload, persistência, preferências, layout mobile e console sem erros.');
+} finally {await browser.close();}
+
