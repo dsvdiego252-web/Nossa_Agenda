@@ -11,8 +11,8 @@
 
 ## Dependências externas não testadas neste ambiente
 
-Não foi criado ou configurado um projeto Supabase real. Login hospedado, WebSockets Realtime entre celulares, instalação em aparelhos físicos e publicação na Vercel precisam do roteiro do README após a configuração das contas.
+Em 22/09/2026, a estrutura exclusiva da agenda foi instalada no projeto Supabase compartilhado. Confirmados: dois membros, zero compromissos, RLS nas duas tabelas e inclusão na publicação Realtime. Os 10 testes locais passaram novamente, incluindo preservação de tabelas preexistentes. Login com as senhas reais, WebSockets entre celulares e instalação em aparelhos físicos ainda exigem validação pelos usuários.
 
 Notificações locais foram implementadas com permissão por aparelho. A entrega em aparelhos físicos não foi validada; notificações com o app fechado exigem uma implementação adicional de Web Push e agendamento no servidor.
 
-Nenhum evento real foi adicionado e nenhum projeto remoto foi publicado.
+Nenhum evento real foi adicionado. A publicação existente na Vercel foi identificada; a atualização de conexão está em andamento.

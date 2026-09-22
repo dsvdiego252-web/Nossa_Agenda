@@ -55,18 +55,18 @@ Para parar o servidor, pressione **Ctrl+C** no terminal.
 ## 3. Criar e configurar o Supabase
 
 1. Acesse [supabase.com/dashboard](https://supabase.com/dashboard) e entre na sua conta.
-2. Crie um **projeto novo e dedicado** a esta agenda. Escolha organização, região e plano conforme sua preferência. Guarde a senha do banco em um gerenciador de senhas.
-3. Em **Authentication → configuração de Sign In / Providers**, mantenha apenas e-mail e senha e **desative a opção que permite novos cadastros / Allow new users to sign up**. Desative também login anônimo e provedores sociais.
+2. Use um projeto existente ou crie um **projeto novo e dedicado** a esta agenda. Escolha organização, região e plano conforme sua preferência. Guarde a senha do banco em um gerenciador de senhas.
+3. **Somente em projeto dedicado:** em **Authentication → configuração de Sign In / Providers**, mantenha apenas e-mail e senha e **desative a opção que permite novos cadastros / Allow new users to sign up**. Desative também login anônimo e provedores sociais.
 4. Abra o **SQL Editor**.
 5. Copie **todo** o conteúdo de [supabase/schema.sql](supabase/schema.sql), cole e execute.
-6. Execute esse arquivo **uma única vez em um projeto vazio**. Ele cria tabelas, restrições, RLS, funções, trigger e publicação Realtime. Não apaga tabelas existentes; uma segunda execução encontrará objetos já criados e será revertida pela transação.
-7. Em **Database → Publications**, confira que `public.events` está incluída em `supabase_realtime`. O SQL faz isso automaticamente quando a publicação existe. Em uma instalação sem essa publicação, configure-a antes de testar Realtime.
+6. Execute esse arquivo **uma única vez, antes de existirem as tabelas desta agenda**. Ele cria tabelas, restrições, RLS, funções, trigger e publicação Realtime. Não apaga tabelas existentes; uma segunda execução encontrará objetos já criados e será revertida pela transação.
+7. Em **Database → Publications**, confira que `public.agenda_familiar_events` está incluída em `supabase_realtime`. O SQL faz isso automaticamente quando a publicação existe. Em uma instalação sem essa publicação, configure-a antes de testar Realtime.
 
 O script **não cria usuários, senhas, famílias nem eventos de exemplo**.
 
 ### Por que uma terceira pessoa não consegue entrar na agenda?
 
-A tabela `members` aceita somente os nomes Diego e Daiane, cada um uma única vez. O ID é o UUID do Supabase Auth. Somente o administrador do projeto consegue escrever nessa tabela.
+A tabela `agenda_familiar_members` aceita somente os nomes Diego e Daiane, cada um uma única vez. O ID é o UUID do Supabase Auth. Somente o administrador do projeto consegue escrever nessa tabela.
 
 As políticas RLS verificam a existência do UUID autenticado nessa lista antes de ler ou alterar compromissos. Um terceiro usuário criado acidentalmente no Auth não ganha acesso. As permissões não dependem de `user_metadata`, e-mails escritos no frontend ou de esconder botões.
 
@@ -76,13 +76,13 @@ A página de login e os arquivos estáticos podem ser públicos; **os compromiss
 
 1. No painel, abra **Authentication → Users → Add user → Create new user**.
 2. Crie o usuário do Diego usando o e-mail real dele e uma senha forte, exclusiva.
-3. Confirme o e-mail manualmente na criação, se o painel oferecer **Auto confirm user**. O cadastro público deve continuar desativado.
+3. Confirme o e-mail manualmente na criação, se o painel oferecer **Auto confirm user**. Em projeto dedicado, mantenha o cadastro público desativado. Em projeto compartilhado, preserve as configurações de autenticação do outro aplicativo.
 4. Faça o mesmo para Daiane, com outro e-mail e outra senha.
 5. Copie o **User UID / UUID** de cada conta. Não use o e-mail no campo UUID.
 6. Volte ao SQL Editor e execute este comando, substituindo os dois valores:
 
 ```sql
-insert into public.members (id, name) values
+insert into public.agenda_familiar_members (id, name) values
   ('UUID-REAL-DO-DIEGO', 'Diego'),
   ('UUID-REAL-DA-DAIANE', 'Daiane');
 ```
@@ -90,14 +90,14 @@ insert into public.members (id, name) values
 7. Verifique:
 
 ```sql
-select id, name from public.members;
+select id, name from public.agenda_familiar_members;
 ```
 
 Devem aparecer **exatamente duas linhas**. Não inclua senhas nesse SQL, nos arquivos ou no GitHub.
 
 **Redefinir senha:** use as opções administrativas de recuperação no painel Authentication. O app não contém um formulário próprio de recuperação. Para envio confiável de e-mails de recuperação pelo Supabase, configure SMTP e os URLs de redirecionamento apropriados. Não compartilhe as credenciais de administração com o app.
 
-**Revogar acesso:** remova o UUID da tabela `members` pelo painel e revogue as sessões no Auth. A próxima leitura/escrita online será negada. Um aparelho offline pode continuar exibindo a cópia que já baixou; nenhum sistema offline consegue apagar remotamente dados de um aparelho desconectado.
+**Revogar acesso:** remova o UUID da tabela `agenda_familiar_members` pelo painel e revogue as sessões no Auth. A próxima leitura/escrita online será negada. Um aparelho offline pode continuar exibindo a cópia que já baixou; nenhum sistema offline consegue apagar remotamente dados de um aparelho desconectado.
 
 ## 5. Conectar o projeto ao Supabase
 
@@ -113,15 +113,15 @@ Em macOS/Linux: `cp .env.example .env.local`.
 3. Edite `.env.local`:
 
 ```dotenv
-VITE_SUPABASE_URL=https://SEU-ID.supabase.co
-VITE_SUPABASE_PUBLISHABLE_KEY=sb_publishable_SUA_CHAVE_PUBLICA
+VITE_AGENDA_SUPABASE_URL=https://SEU-ID.supabase.co
+VITE_AGENDA_SUPABASE_PUBLISHABLE_KEY=sb_publishable_SUA_CHAVE_PUBLICA
 ```
 
 4. Use exclusivamente a **publishable key** (ou a chave legada `anon`, se necessário). **Nunca use `service_role`, `sb_secret_...` ou a senha do banco**. Variáveis com prefixo `VITE_` ficam embutidas no JavaScript público. A proteção dos dados vem do Auth e das políticas RLS.
 5. Reinicie `pnpm dev` após alterar as variáveis.
 6. Entre com o e-mail e senha de uma das duas contas.
 
-Em Authentication → URL Configuration, configure o Site URL para o endereço local durante desenvolvimento e para o endereço HTTPS final após publicar. Não habilite cadastros para corrigir erros de login.
+Somente em projeto dedicado, em Authentication → URL Configuration, configure o Site URL para o endereço local durante desenvolvimento e para o endereço HTTPS final após publicar. Não habilite cadastros para corrigir erros de login.
 
 A política CSP de `vercel.json` permite os domínios padrão `*.supabase.co`. Se usar domínio customizado ou Supabase auto-hospedado, adapte o `connect-src` para o seu endpoint HTTPS/WSS.
 
@@ -153,7 +153,7 @@ Faça esta etapa **depois de configurar o Supabase**. Os testes locais não subs
 5. Edite na segunda janela e observe a primeira.
 6. Exclua e verifique o desaparecimento nas duas.
 7. Se não atualizar imediatamente, confira a publicação Realtime. O app também consulta novamente a cada 30 segundos, ao focar e ao reconectar.
-8. Para testar RLS, crie opcionalmente uma terceira conta temporária no Auth, **sem inseri-la em members**. Ela não deve conseguir entrar na agenda. Remova-a depois. Não é necessário nem possível adicionar uma terceira linha válida em members.
+8. Para testar RLS, crie opcionalmente uma terceira conta temporária no Auth, **sem inseri-la em agenda_familiar_members**. Ela não deve conseguir entrar na agenda. Remova-a depois. Não é necessário nem possível adicionar uma terceira linha válida em agenda_familiar_members.
 
 ### Testar offline de verdade
 
@@ -328,9 +328,9 @@ pnpm-lock.yaml             Versões exatas das dependências
 | --- | --- |
 | Aparece “Explorar prévia local” | Variáveis não preenchidas; reinicie o servidor ou faça novo deploy. |
 | Login recusado | E-mail, senha, usuário confirmado no Auth e conexão. |
-| Conta não autorizada | UUID correto na tabela members; o nome sozinho não basta. |
+| Conta não autorizada | UUID correto na tabela agenda_familiar_members; o nome sozinho não basta. |
 | Não sincroniza | SQL executado, RLS, Project URL, publishable key e conexão. |
-| Realtime não atualiza | Tabela events na publicação supabase_realtime; teste após 30 segundos. |
+| Realtime não atualiza | Tabela agenda_familiar_events na publicação supabase_realtime; teste após 30 segundos. |
 | Erro de conflito | Resolva o aviso no app; não altere version manualmente. |
 | Não abre offline | Use build + preview/HTTPS, abra conectado e recarregue antes de desconectar. |
 | Não instala | HTTPS, navegador compatível, manifesto/ícones acessíveis e app não instalado anteriormente. |
@@ -344,3 +344,11 @@ pnpm-lock.yaml             Versões exatas das dependências
 - [Realtime: Postgres Changes](https://supabase.com/docs/guides/realtime/postgres-changes)
 - [Vite](https://vite.dev/guide/)
 
+
+## Usar um Supabase compartilhado
+
+A agenda usa somente as tabelas `public.agenda_familiar_members` e `public.agenda_familiar_events` e funções com prefixo `agenda_familiar_`. O SQL é aditivo: não altera tabelas de outros aplicativos. Execute uma única vez; se já existirem recursos com esses nomes, pare e confira a instalação anterior. Não exclua tabelas para repetir a instalação.
+
+As contas do Supabase Auth são compartilhadas pelo projeto. Reutilize a conta existente de Diego e crie manualmente a de Daiane, se necessário. Autorize somente seus dois UUIDs na tabela da agenda. Outros usuários do projeto não recebem acesso aos compromissos. Não altere Site URL, provedores, cadastro público ou políticas de outros aplicativos. A agenda não oferece cadastro e sua autorização depende da tabela de membros, mesmo se outro aplicativo permitir cadastro.
+
+Antes de compartilhar um banco, revise também as políticas e gatilhos do aplicativo existente: criar uma conta de Auth pode dar acesso a ele se suas políticas permitirem qualquer usuário autenticado. Compartilhar o Auth não garante isolamento das permissões do outro aplicativo.

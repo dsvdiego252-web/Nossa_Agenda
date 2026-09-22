@@ -94,7 +94,7 @@ async function enter(member, preview = false) {
   await store.init(); render();
   if (!preview) {
     const current = store;
-    channel = supabase.channel('agenda-events').on('postgres_changes', { event: '*', schema: 'public', table: 'events' }, () => current.sync()).subscribe(status => {
+    channel = supabase.channel('agenda-events').on('postgres_changes', { event: '*', schema: 'public', table: 'agenda_familiar_events' }, () => current.sync()).subscribe(status => {
       if (status === 'SUBSCRIBED') current.sync();
     });
     await store.sync();
