@@ -15,4 +15,4 @@ Em 22/09/2026, a estrutura exclusiva da agenda foi instalada no projeto Supabase
 
 Notificações locais foram implementadas com permissão por aparelho. A entrega em aparelhos físicos não foi validada; notificações com o app fechado exigem uma implementação adicional de Web Push e agendamento no servidor.
 
-Nenhum evento real foi adicionado. A publicação existente na Vercel foi identificada; a atualização de conexão está em andamento.
+Nenhum evento real foi adicionado. Produção atualizada em https://nossa-agenda-one.vercel.app (Vercel: Ready; commit 8e032e0). Tela de login habilitada conferida após atualização do service worker. URL e chave publicável configuradas em variáveis VITE_AGENDA_* de produção; nenhuma senha administrativa foi usada no frontend.
