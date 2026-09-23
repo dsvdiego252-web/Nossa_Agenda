@@ -1,4 +1,5 @@
 import './styles.css';
+import { requestInstall } from './install.js';
 import { configured, supabase, getMember } from './backend.js';
 import { AgendaStore } from './sync.js';
 import { readAccount } from './storage.js';
@@ -24,7 +25,7 @@ const icon = (name, size = 20) => {
   };
   return '<svg width="' + size + '" height="' + size + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + (paths[name] || paths.calendar) + '</svg>';
 };
-let store, channel, installPrompt, editorEvent;
+let store, channel, editorEvent;
 let selected = todayInBrasilia(), view = 'month', ownerFilter = '', categoryFilter = '';
 let toastTimer, authEpoch = 0;
 const today = todayInBrasilia;
@@ -140,8 +141,7 @@ app.addEventListener('click', async event => {
     if (action === 'sync') { await store.sync(); toast(store.status); closeDialogs(); }
     if (action === 'notifications') { const active = await toggleReminders(store.key); toast(active ? 'Lembretes ativados neste aparelho.' : 'Lembretes desativados.'); dialogRefresh(); }
     if (action === 'install') {
-      if (installPrompt) { await installPrompt.prompt(); installPrompt = null; }
-      else toast('Use o menu do navegador para adicionar à tela inicial. A instalação requer HTTPS ou localhost.');
+      closeDialogs(); await requestInstall();
     }
     if (action === 'conflict-remote' || action === 'conflict-copy') await store.resolveConflict(action === 'conflict-copy');
     if (action === 'export') {
@@ -179,7 +179,6 @@ app.addEventListener('submit', async event => {
   finally { button.disabled = false; }
 });
 app.addEventListener('cancel', () => setTimeout(render, 0), true);
-window.addEventListener('beforeinstallprompt', event => { event.preventDefault(); installPrompt = event; });
 window.addEventListener('online', () => store?.sync());
 window.addEventListener('offline', () => { if (store && !store.preview) { store.status = 'Offline · salvo neste aparelho'; render(); } });
 window.addEventListener('focus', () => store?.sync());

@@ -352,3 +352,11 @@ A agenda usa somente as tabelas `public.agenda_familiar_members` e `public.agend
 As contas do Supabase Auth são compartilhadas pelo projeto. Reutilize a conta existente de Diego e crie manualmente a de Daiane, se necessário. Autorize somente seus dois UUIDs na tabela da agenda. Outros usuários do projeto não recebem acesso aos compromissos. Não altere Site URL, provedores, cadastro público ou políticas de outros aplicativos. A agenda não oferece cadastro e sua autorização depende da tabela de membros, mesmo se outro aplicativo permitir cadastro.
 
 Antes de compartilhar um banco, revise também as políticas e gatilhos do aplicativo existente: criar uma conta de Auth pode dar acesso a ele se suas políticas permitirem qualquer usuário autenticado. Compartilhar o Auth não garante isolamento das permissões do outro aplicativo.
+
+### Convite de instalação no celular
+
+Ao abrir pelo navegador em uma tela de celular, a agenda exibe um convite antes do login. Quando o navegador disponibiliza `beforeinstallprompt`, o botão Instalar abre a confirmação nativa após o toque. No iPhone/iPad, Como instalar explica o caminho Compartilhar → Adicionar à Tela de Início no Safari. Navegadores internos (por exemplo, WhatsApp) podem exigir abrir primeiro no Chrome ou Safari. O aplicativo não pode forçar a confirmação do sistema operacional.
+
+Agora não esconde o convite durante a sessão da aba. Em Preferências, Instalar aplicativo permite abrir a ajuda novamente. O convite não aparece quando a agenda está aberta no modo instalado (standalone).
+
+Referências: [instalação de PWA (MDN)](https://developer.mozilla.org/en-US/docs/Web/Progressive_web_apps/How_to/Trigger_install_prompt) e [Tela de Início no iPhone (Apple)](https://support.apple.com/guide/iphone/open-as-web-app-iphea86e5236/ios).

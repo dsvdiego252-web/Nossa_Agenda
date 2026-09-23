@@ -7,3 +7,19 @@
 
 
 .filters select{width:auto}
+
+/* Em fluxo normal: não cobre login, calendário ou teclado do celular. */
+.install-banner { padding: 14px max(16px, env(safe-area-inset-left)); background: #e8f0e8; color: #244a38; border-bottom: 1px solid #cbdccc; }
+.install-banner[hidden], #install-help[hidden] { display: none; }
+.install-banner-main { display: flex; align-items: center; gap: 12px; max-width: 1000px; margin: auto; }
+.install-banner-main img { border-radius: 12px; flex-shrink: 0; }
+.install-banner-main > div { flex: 1; min-width: 0; }
+.install-banner strong { font-size: 14px; }
+.install-banner p { margin: 4px 0 0; font-size: 12px; line-height: 1.5; }
+.install-banner .primary { padding: 10px 14px; white-space: nowrap; }
+#install-help { max-width: 1000px; margin: 12px auto 0; font-size: 14px; }
+@media (max-width: 480px) {
+  .install-banner-main { gap: 8px; flex-wrap: wrap; }
+  .install-banner-main > div { flex-basis: calc(100% - 60px); }
+  .install-banner-main .primary { flex: 1; }
+}
