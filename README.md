@@ -18,7 +18,7 @@ Uma agenda privada para duas pessoas, feita com **HTML, CSS e JavaScript**, com 
 - Manifesto, ícones PNG e service worker que armazena apenas os arquivos públicos do app.
 - Testes automatizados de datas, fila offline, SQL/RLS e navegador.
 
-**Ainda depende de configuração externa:** criar um projeto Supabase, executar o SQL, criar as duas contas e preencher as variáveis. GitHub e Vercel não foram criados nem publicados automaticamente. A entrega de notificações com o app fechado **não está implementada**; veja a seção específica abaixo.
+**Para uma nova instalação:** configure Supabase, as duas contas e as variáveis da Vercel conforme este guia. Web Push com o app fechado está implementado e exige as chaves e o agendador da seção 8. A instalação desta família usa https://nossa-agenda-one.vercel.app.
 
 ## 1. Preparar o computador
 
@@ -198,29 +198,33 @@ Nenhuma versão remota é sobrescrita silenciosamente. A fila aguarda a resoluç
 - Exclusões antigas não são removidas automaticamente. Não apague esses registros sem planejar a invalidação das cópias offline.
 - Atualizações do app aguardam fechar todas as abas/janelas da versão anterior. Reabra conectado para carregar a nova versão.
 
-## 8. Notificações: o que funciona e o que precisa ser feito
+## 8. Notificações com a agenda fechada
 
-### Implementado
+O Supabase Cron consulta os compromissos a cada minuto e chama a API da Vercel. Ela envia Web Push, recebido pelo service worker mesmo com a janela fechada. A permissão precisa ser ativada em cada aparelho, inclusive se você usava os lembretes locais da versão anterior.
 
-Em **Preferências → Ativar lembretes**, conceda permissão em cada aparelho. Cada compromisso tem uma antecedência compartilhada; a opção de ativar notificações é individual por dispositivo/usuário.
+### Configuração do servidor (uma vez)
 
-O app verifica lembretes a cada 30 segundos enquanto está executando e tenta exibir a notificação no minuto de vencimento. Há deduplicação local. Lembretes vencidos há mais de um minuto não são reenviados ao abrir o app mais tarde.
+1. Em um banco novo, execute `supabase/schema.sql`, que inclui a estrutura de push. Se a agenda já estava instalada antes desta atualização, execute **somente** `supabase/migrations/20260928_push.sql`, uma vez. Não execute os dois no mesmo banco.
+2. Na pasta do projeto, rode `node scripts/generate-push-keys.mjs`. Ele cria `.env.push-production`, ignorado pelo Git, e se recusa a sobrescrever chaves existentes. Preserve esse arquivo com segurança.
+3. Na Vercel, abra o projeto → **Environment Variables → Add Environment Variable → Import .env**. Importe esse arquivo para **Production**, tipo **Secret**. Ele contém `AGENDA_VAPID_PUBLIC_KEY` e `AGENDA_VAPID_PRIVATE_KEY`.
+4. No SQL Editor do Supabase, execute `select token from agenda_familiar_private.push_config;`. Copie o resultado diretamente para uma variável **Secret** chamada `AGENDA_PUSH_TOKEN` na Vercel, ambiente Production. Não compartilhe o resultado nem o coloque no código. Esse token autoriza somente as funções de envio da agenda; não é uma chave administrativa do Supabase.
+5. Mantenha também `VITE_AGENDA_SUPABASE_URL` e `VITE_AGENDA_SUPABASE_PUBLISHABLE_KEY` configuradas. Nunca use `service_role` nem prefixo `VITE_` para segredos de push.
+6. Publique o código atualizado ou faça Redeploy. A URL `/api/push-config` deve retornar somente a chave pública. Erro 503 indica variável ausente; confira as cinco variáveis e publique novamente.
+7. Abra `supabase/cron.sql`. Confira o domínio da sua publicação e execute no SQL Editor. O arquivo habilita `pg_cron` e `pg_net` e agenda `agenda-familiar-push` a cada minuto. Reexecutar atualiza o mesmo agendamento. Para pausar, use o comando comentado no final do arquivo.
 
-**Não há garantia de alerta pontual se o navegador suspender a aba, o sistema economizar bateria, o app fechar ou a tela estiver bloqueada.** Isso é uma limitação da implementação local, não algo que se resolve apenas permitindo notificações.
+O `pnpm dev` serve a interface, mas não executa as funções Node da Vercel nem o Cron. Para testar a entrega completa, use a publicação HTTPS com a configuração acima. Não é necessário contratar o Cron da Vercel.
 
-### Para notificações com o app fechado
+### Ativação no Android
 
-É necessário implementar e configurar um serviço real de **Web Push**, incluindo:
+1. Abra a agenda atualizada no Chrome ou pelo ícone instalado.
+2. Entre na sua conta, abra **Preferências → Ativar lembretes** e permita notificações.
+3. Toque em **Testar notificação**, feche a agenda e aguarde até 2 minutos. O teste é agendado para 30 segundos depois, para dar tempo de fechar.
+4. Repita no celular da outra pessoa. Cada aparelho autorizado recebe os compromissos compartilhados que têm lembrete, independentemente do responsável.
+5. Ao criar um compromisso, escolha a antecedência e aguarde a sincronização. Um compromisso salvo somente offline ainda não pode ser enviado pelo servidor.
 
-1. Gerar chaves VAPID e guardar a chave privada somente no servidor.
-2. Solicitar permissão e registrar `PushSubscription` em cada aparelho.
-3. Criar tabela de subscriptions com RLS por usuário.
-4. Implementar um agendador seguro (por exemplo, Supabase Cron + Edge Function) que expanda as recorrências, calcule os horários em Brasília e dispare os lembretes.
-5. Adicionar registro de entregas/idempotência, novas tentativas, limpeza de subscriptions expiradas e checagem de acesso.
-6. Implementar o evento `push` no service worker.
-7. Testar entrega com app fechado em Android e iPhone.
+Internet, permissões do Chrome/Android e serviços de push funcionando são necessários. Economia de bateria, aparelho desligado ou uso de **Forçar parada** podem atrasar ou impedir a entrega; fechar a janela normalmente é compatível. Web Push não garante um alarme no segundo exato. No iPhone, instale na Tela de Início e use uma versão compatível do iOS; consulte a [documentação WebKit](https://webkit.org/blog/13878/web-push-for-web-apps-on-ios-and-ipados/).
 
-**Esses componentes não fazem parte desta versão e não há uma variável secreta que simplesmente os ative.** O app já guarda a antecedência no banco e trata clique em notificação, mas o servidor de push e o agendamento precisam ser desenvolvidos. No iPhone, notificações web dependem de versão compatível do iOS e app instalado na tela inicial. Consulte a [documentação WebKit](https://webkit.org/blog/13878/web-push-for-web-apps-on-ios-and-ipados/) para requisitos.
+O envio considera Brasília e todas as repetições da agenda. A recuperação de atrasos é limitada a 10 minutos, com até cinco tentativas; registros de entrega ficam por sete dias. Há deduplicação por aparelho, ocorrência e versão do compromisso. Alterar o compromisso pode gerar um novo lembrete. Inscrições expiradas são removidas. Sair da conta ou desativar lembretes remove a inscrição daquele aparelho e exige internet. O limite é dez inscrições por pessoa. Títulos podem aparecer na tela bloqueada, conforme suas configurações do Android.
 
 ## 9. Testes locais
 
@@ -307,7 +311,7 @@ src/
   backend.js               Cliente Supabase e chamadas ao banco
   storage.js               IndexedDB
   sync.js                  Fila, controle de versão e conflitos
-  notifications.js         Lembretes locais
+  notifications.js         Inscrição Web Push por aparelho
   sw-template.js           Modelo do service worker
 public/
   manifest.webmanifest     Instalação PWA

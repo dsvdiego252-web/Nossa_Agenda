@@ -14,7 +14,8 @@
     "test:browser": "node tests/browser.mjs"
   },
   "dependencies": {
-    "@supabase/supabase-js": "2.116.0"
+    "@supabase/supabase-js": "2.116.0",
+    "web-push": "3.6.7"
   },
   "devDependencies": {
     "@electric-sql/pglite": "0.5.8",

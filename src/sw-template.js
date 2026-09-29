@@ -1,5 +1,8 @@
 const CACHE = 'agenda-shell-__CACHE_VERSION__';
 const ASSETS = __PRECACHE__;
+self.addEventListener('message', event => {
+  if (event.data?.type === 'ACTIVATE_PUSH') event.waitUntil(self.skipWaiting());
+});
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(ASSETS)));
 });
@@ -24,3 +27,13 @@ self.addEventListener('notificationclick', event => {
   }));
 });
 
+
+self.addEventListener('push', event => {
+  let payload = {};
+  try { payload = event.data?.json() || {}; } catch {}
+  event.waitUntil(self.registration.showNotification(payload.title || 'Agenda Familiar', {
+    body: payload.body || 'Você tem um lembrete na agenda.',
+    tag: payload.tag || 'agenda-reminder', icon: '/icons/icon-192.png', badge: '/icons/icon-192.png',
+    data: { url: '/' }
+  }));
+});
