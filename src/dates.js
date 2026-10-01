@@ -1,5 +1,7 @@
 export const OWNERS = { Diego: '#668bc1', Daiane: '#c38091', Ambos: '#8b7bb6', Família: '#b58b45' };
 export const WEEKDAYS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+export const REMINDERS = [[1440, '1 dia antes'], [60, '1 hora antes'], [30, '30 minutos antes'], [10, '10 minutos antes'], [0, 'Na hora']];
+export const eventReminders = event => event.reminders ?? (event.reminder >= 0 ? [event.reminder] : []);
 export const isoDate = (date = new Date()) => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
 export const parseDate = value => new Date(`${value}T12:00:00`);
 export const addDays = (value, amount) => { const d = parseDate(value); d.setDate(d.getDate() + amount); return isoDate(d); };
@@ -41,6 +43,7 @@ export function validateEvent(event) {
   if (!/^#[0-9a-f]{6}$/i.test(event.color)) throw new Error('Cor inválida.');
   if ((event.notes || '').length > 4000) throw new Error('As observações devem ter até 4.000 caracteres.');
   if (![-1, 0, 10, 30, 60, 1440].includes(event.reminder)) throw new Error('Lembrete inválido.');
+  if (event.reminders != null && (!Array.isArray(event.reminders) || event.reminders.length > 5 || new Set(event.reminders).size !== event.reminders.length || event.reminders.some(value => !REMINDERS.some(([minutes]) => minutes === value)))) throw new Error('Selecione lembretes válidos, sem repetir horários.');
   return event;
 }
 

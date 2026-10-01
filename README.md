@@ -214,13 +214,17 @@ O Supabase Cron consulta os compromissos a cada minuto e chama a API da Vercel. 
 
 O `pnpm dev` serve a interface, mas não executa as funções Node da Vercel nem o Cron. Para testar a entrega completa, use a publicação HTTPS com a configuração acima. Não é necessário contratar o Cron da Vercel.
 
+### Atualização para vários lembretes
+
+Em instalações que já têm Web Push, execute uma vez `supabase/migrations/20260930_multiple_reminders.sql` antes de publicar o frontend atualizado. O `schema.sql` já inclui essa atualização para bancos novos. Compromissos antigos preservam seu lembrete; inscrições dos celulares continuam válidas.
+
 ### Ativação no Android
 
 1. Abra a agenda atualizada no Chrome ou pelo ícone instalado.
 2. Entre na sua conta, abra **Preferências → Ativar lembretes** e permita notificações.
 3. Toque em **Testar notificação**, feche a agenda e aguarde até 2 minutos. O teste é agendado para 30 segundos depois, para dar tempo de fechar.
 4. Repita no celular da outra pessoa. Cada aparelho autorizado recebe os compromissos compartilhados que têm lembrete, independentemente do responsável.
-5. Ao criar um compromisso, escolha a antecedência e aguarde a sincronização. Um compromisso salvo somente offline ainda não pode ser enviado pelo servidor.
+5. Ao criar ou editar um compromisso, marque um ou mais lembretes (por exemplo, 1 dia antes e 1 hora antes) e aguarde a sincronização. Deixe todos desmarcados para não receber avisos. Um compromisso salvo somente offline ainda não pode ser enviado pelo servidor.
 
 Internet, permissões do Chrome/Android e serviços de push funcionando são necessários. Economia de bateria, aparelho desligado ou uso de **Forçar parada** podem atrasar ou impedir a entrega; fechar a janela normalmente é compatível. Web Push não garante um alarme no segundo exato. No iPhone, instale na Tela de Início e use uma versão compatível do iOS; consulte a [documentação WebKit](https://webkit.org/blog/13878/web-push-for-web-apps-on-ios-and-ipados/).
 
