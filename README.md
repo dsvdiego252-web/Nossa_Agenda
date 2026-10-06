@@ -368,3 +368,7 @@ Ao abrir pelo navegador em uma tela de celular, a agenda exibe um convite antes 
 Agora não esconde o convite durante a sessão da aba. Em Preferências, Instalar aplicativo permite abrir a ajuda novamente. O convite não aparece quando a agenda está aberta no modo instalado (standalone).
 
 Referências: [instalação de PWA (MDN)](https://developer.mozilla.org/en-US/docs/Web/Progressive_web_apps/How_to/Trigger_install_prompt) e [Tela de Início no iPhone (Apple)](https://support.apple.com/guide/iphone/open-as-web-app-iphea86e5236/ios).
+
+### Antecedências de 2 dias e 1 semana
+
+Para atualizar uma instalação que já aceita vários lembretes, execute uma vez `supabase/migrations/20261006_longer_reminders.sql` antes de publicar o frontend. O schema completo já inclui a atualização. Você pode combinar até sete horários: 1 semana, 2 dias, 1 dia, 1 hora, 30 minutos, 10 minutos e na hora. O agendador considera ocorrências até oito dias à frente.

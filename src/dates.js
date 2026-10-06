@@ -1,6 +1,6 @@
 export const OWNERS = { Diego: '#668bc1', Daiane: '#c38091', Ambos: '#8b7bb6', Família: '#b58b45' };
 export const WEEKDAYS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
-export const REMINDERS = [[1440, '1 dia antes'], [60, '1 hora antes'], [30, '30 minutos antes'], [10, '10 minutos antes'], [0, 'Na hora']];
+export const REMINDERS = [[10080, '1 semana antes'], [2880, '2 dias antes'], [1440, '1 dia antes'], [60, '1 hora antes'], [30, '30 minutos antes'], [10, '10 minutos antes'], [0, 'Na hora']];
 export const eventReminders = event => event.reminders ?? (event.reminder >= 0 ? [event.reminder] : []);
 export const isoDate = (date = new Date()) => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
 export const parseDate = value => new Date(`${value}T12:00:00`);
@@ -42,8 +42,8 @@ export function validateEvent(event) {
   if (event.repeat_until && (!/^\d{4}-\d{2}-\d{2}$/.test(event.repeat_until) || isoDate(parseDate(event.repeat_until)) !== event.repeat_until || event.repeat_until < event.date)) throw new Error('A data limite deve ser igual ou posterior à data inicial.');
   if (!/^#[0-9a-f]{6}$/i.test(event.color)) throw new Error('Cor inválida.');
   if ((event.notes || '').length > 4000) throw new Error('As observações devem ter até 4.000 caracteres.');
-  if (![-1, 0, 10, 30, 60, 1440].includes(event.reminder)) throw new Error('Lembrete inválido.');
-  if (event.reminders != null && (!Array.isArray(event.reminders) || event.reminders.length > 5 || new Set(event.reminders).size !== event.reminders.length || event.reminders.some(value => !REMINDERS.some(([minutes]) => minutes === value)))) throw new Error('Selecione lembretes válidos, sem repetir horários.');
+  if (event.reminder !== -1 && !REMINDERS.some(([minutes]) => minutes === event.reminder)) throw new Error('Lembrete inválido.');
+  if (event.reminders != null && (!Array.isArray(event.reminders) || event.reminders.length > REMINDERS.length || new Set(event.reminders).size !== event.reminders.length || event.reminders.some(value => !REMINDERS.some(([minutes]) => minutes === value)))) throw new Error('Selecione lembretes válidos, sem repetir horários.');
   return event;
 }
 
